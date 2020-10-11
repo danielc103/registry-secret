@@ -16,35 +16,39 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/danielc103/registry-secret/secret"
 	"github.com/spf13/cobra"
 )
 
+// fileName set as constant
+const fileName = ".dockerconfigjson"
+
+// Username flag variable
 var Username string
+
+// Password flag variable
 var Password string
+
+// Email flag variable
 var Email string
-var Registry string
 
-type DockerConfig struct {
-	Auths DockerInfo `json:"auth"`
-	// +optional
-	HttpHeaders map[string]string `json:"HttpHeaders, omitempty"`
-}
+// Server flag variable
+var Server string
 
-type DockerInfo map[string]DockerInfoValues
-
-type DockerInfoValues struct {
-	Username string `json:"username, omitempty"`
-	Password string `json:"password, omitempty"`
-	Email    string `json:"email, omitempty"`
-	Auth     string `json:"auth, omitempty"`
-}
+// SetAuth flag bool
+var SetAuth bool
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "generates .dockerconfigjson file",
 	Run: func(cmd *cobra.Command, args []string) {
+		j, err := secret.CreateDockerJSON(Username, Password, Email, Server, SetAuth, nil)
+		if err != nil {
+			println(err)
+		}
 
+		secret.WriteToFile(j, fileName)
 	},
 }
 
@@ -55,8 +59,10 @@ func init() {
 	generateCmd.MarkFlagRequired("username")
 	generateCmd.Flags().StringVarP(&Password, "password", "p", "", "registry password")
 	generateCmd.MarkFlagRequired("password")
-	generateCmd.Flags().StringVarP(&Registry, "registry", "r", "", "regsitry name - ex: gitlab.com/myrepo/")
+	generateCmd.Flags().StringVarP(&Server, "registry", "r", "", "regsitry name - ex: gitlab.com/myrepo/")
 	generateCmd.MarkFlagRequired("registry")
 	generateCmd.Flags().StringVarP(&Email, "email", "e", "", "user email address")
+
+	generateCmd.Flags().BoolVarP(&SetAuth, "auth", "a", false, "encrytped auth - defaults to false")
 
 }
